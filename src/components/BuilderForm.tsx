@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { SoulDraft } from '../lib/model';
 import { ListEditor } from './ListEditor';
 
@@ -9,12 +8,6 @@ interface Props {
 
 export function BuilderForm({ draft, onChange }: Props) {
   const set = (patch: Partial<SoulDraft>) => onChange({ ...draft, ...patch });
-
-  const [showDomain, setShowDomain] = useState(draft.domainPosture !== undefined);
-  const [showExamples, setShowExamples] = useState(draft.examples !== undefined);
-
-  const domainPosture = draft.domainPosture ?? { title: '', lines: [''] };
-  const examples = draft.examples ?? [''];
 
   return (
     <div className="builder">
@@ -47,41 +40,38 @@ export function BuilderForm({ draft, onChange }: Props) {
           onChange={(defaults) => set({ defaults })} />
       </section>
 
-      {showDomain ? (
+      {draft.domainPosture ? (
         <section className="field optional">
           <label>
             <span>Domain title</span>
-            <input aria-label="Domain title" value={domainPosture.title}
+            <input aria-label="Domain title" value={draft.domainPosture.title}
               placeholder="e.g. Code Review"
-              onChange={(e) => set({ domainPosture: { ...domainPosture, title: e.target.value } })} />
+              onChange={(e) => set({ domainPosture: { ...draft.domainPosture!, title: e.target.value } })} />
           </label>
-          <ListEditor label="Domain line" items={domainPosture.lines} placeholder="Prioritize correctness."
-            onChange={(lines) => set({ domainPosture: { ...domainPosture, lines } })} />
-          <button type="button" className="remove-section"
-            onClick={() => { setShowDomain(false); set({ domainPosture: undefined }); }}>
+          <ListEditor label="Domain line" items={draft.domainPosture.lines} placeholder="Prioritize correctness."
+            onChange={(lines) => set({ domainPosture: { ...draft.domainPosture!, lines } })} />
+          <button type="button" className="remove-section" onClick={() => set({ domainPosture: undefined })}>
             Remove domain posture
           </button>
         </section>
       ) : (
         <button type="button" className="add-section"
-          onClick={() => { setShowDomain(true); set({ domainPosture: { title: '', lines: [''] } }); }}>
+          onClick={() => set({ domainPosture: { title: '', lines: [''] } })}>
           + Add domain posture
         </button>
       )}
 
-      {showExamples ? (
+      {draft.examples ? (
         <section className="field optional">
           <span>Examples</span>
-          <ListEditor label="Example" items={examples} placeholder="Say when something is a bad idea."
+          <ListEditor label="Example" items={draft.examples} placeholder="Say when something is a bad idea."
             onChange={(examples) => set({ examples })} />
-          <button type="button" className="remove-section"
-            onClick={() => { setShowExamples(false); set({ examples: undefined }); }}>
+          <button type="button" className="remove-section" onClick={() => set({ examples: undefined })}>
             Remove examples
           </button>
         </section>
       ) : (
-        <button type="button" className="add-section"
-          onClick={() => { setShowExamples(true); set({ examples: [''] }); }}>
+        <button type="button" className="add-section" onClick={() => set({ examples: [''] })}>
           + Add examples
         </button>
       )}
