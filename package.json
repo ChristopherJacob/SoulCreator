@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test": "vitest run src",
+    "test:build": "vitest run scripts",
     "test:watch": "vitest",
     "pack:build": "npx tsx scripts/build-pack.mjs"
   },
