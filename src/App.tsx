@@ -9,6 +9,7 @@ import {
   loadDraft, saveDraft, loadActivePack, migrateLegacyDraft,
   loadActiveTab, saveActiveTab,
 } from './lib/storage';
+import { moveLeaksToAgents } from './lib/crossTab';
 import { TabBar } from './components/TabBar';
 import { BuilderForm } from './components/BuilderForm';
 import { PresetPicker } from './components/PresetPicker';
@@ -49,6 +50,12 @@ export default function App() {
     saveActiveTab(id);
   };
 
+  const handleMoveLeaks = () => {
+    const moved = moveLeaksToAgents(drafts.soul, drafts.agents, pack.docTypes.soul.sections);
+    setDrafts({ soul: moved.soul, agents: moved.agents });
+    selectTab('agents');
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -65,7 +72,7 @@ export default function App() {
         </section>
         <section className="pane pane-right">
           <PreviewPane sections={docPack.sections} gate={docPack.gate} draft={draft} filename={docType.filename} />
-          <ScorePanel result={score} />
+          <ScorePanel result={score} onMoveLeaks={active === 'soul' ? handleMoveLeaks : undefined} />
         </section>
       </main>
 
