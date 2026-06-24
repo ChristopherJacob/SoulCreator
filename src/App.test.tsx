@@ -1,17 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen, fireEvent } from '@testing-library/react';
 import App from './App';
 
-describe('App', () => {
-  beforeEach(() => localStorage.clear());
+beforeEach(() => localStorage.clear());
 
-  it('applies a preset and reflects it in score and preview', async () => {
+describe('App', () => {
+  it('renders the SOUL builder and updates the live score when a preset is applied', () => {
     render(<App />);
-    await userEvent.click(screen.getByRole('button', { name: /pragmatic engineer/i }));
-    // export becomes enabled once a strong preset is loaded
-    expect(screen.getByRole('button', { name: /download soul\.md/i })).toBeEnabled();
-    // preview shows the identity heading text
-    expect(screen.getAllByText(/pragmatic/i).length).toBeGreaterThan(0);
+    expect(screen.getByText('SOUL Creator')).toBeInTheDocument();
+    expect(screen.getByText('0')).toBeInTheDocument(); // empty score
+    fireEvent.click(screen.getByText('Pragmatic Engineer'));
+    expect(screen.getByText('100')).toBeInTheDocument();
   });
 });

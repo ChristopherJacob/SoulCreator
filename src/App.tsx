@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { EMPTY_DRAFT, type SoulDraft } from './lib/model';
-import { scoreSoul } from './lib/scoring';
-import { loadDraft, saveDraft } from './lib/storage';
+import { emptyDraft, type Draft } from './lib/model';
+import { scoreDraft } from './lib/pack/engine';
+import { presetsFor } from './lib/presets';
+import { BASELINE_PACK } from './lib/pack/baseline';
+import { docTypeById } from './lib/docTypes';
+import {
+  loadDraft, saveDraft, loadActivePack, migrateLegacyDraft,
+} from './lib/storage';
 import { BuilderForm } from './components/BuilderForm';
 import { PresetPicker } from './components/PresetPicker';
 import { ScorePanel } from './components/ScorePanel';
@@ -9,11 +14,22 @@ import { PreviewPane } from './components/PreviewPane';
 import './App.css';
 
 export default function App() {
-  const [draft, setDraft] = useState<SoulDraft>(() => loadDraft() ?? EMPTY_DRAFT);
-  const score = useMemo(() => scoreSoul(draft), [draft]);
+  const pack = useMemo(() => loadActivePack() ?? BASELINE_PACK, []);
+  const docType = docTypeById('soul');
+  const docPack = pack.docTypes.soul;
+
+  const [draft, setDraft] = useState<Draft>(() => {
+    migrateLegacyDraft();
+    return loadDraft('soul') ?? emptyDraft(docPack.sections);
+  });
+
+  const score = useMemo(
+    () => scoreDraft(docPack.rubric, draft, docPack.sections),
+    [docPack, draft],
+  );
 
   useEffect(() => {
-    const id = setTimeout(() => saveDraft(draft), 300);
+    const id = setTimeout(() => saveDraft('soul', draft), 300);
     return () => clearTimeout(id);
   }, [draft]);
 
@@ -21,17 +37,17 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <h1>SOUL Creator</h1>
-        <p>Craft a best-of-breed <code>SOUL.md</code> for your Hermes agent.</p>
+        <p>{docType.blurb}</p>
       </header>
 
-      <PresetPicker onApply={setDraft} />
+      <PresetPicker presets={presetsFor(pack, 'soul')} onApply={setDraft} />
 
       <main className="panes">
         <section className="pane pane-left">
-          <BuilderForm draft={draft} onChange={setDraft} />
+          <BuilderForm sections={docPack.sections} draft={draft} onChange={setDraft} />
         </section>
         <section className="pane pane-right">
-          <PreviewPane draft={draft} />
+          <PreviewPane sections={docPack.sections} gate={docPack.gate} draft={draft} filename={docType.filename} />
           <ScorePanel result={score} />
         </section>
       </main>
