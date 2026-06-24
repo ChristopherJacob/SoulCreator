@@ -1,24 +1,40 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loadDraft, saveDraft, STORAGE_KEY } from './storage';
-import type { SoulDraft } from './model';
+import {
+  loadDraft, saveDraft, loadActivePack, saveActivePack,
+  loadAvailablePack, saveAvailablePack, clearAvailablePack,
+  loadActiveTab, saveActiveTab, migrateLegacyDraft, LEGACY_KEY,
+} from './storage';
+import { BASELINE_PACK } from './pack/baseline';
+import type { Draft } from './model';
 
-const draft: SoulDraft = { identity: 'X', style: ['Be direct.'], avoid: [], defaults: [] };
+beforeEach(() => localStorage.clear());
 
 describe('storage', () => {
-  beforeEach(() => localStorage.clear());
-
-  it('returns null when nothing is stored', () => {
-    expect(loadDraft()).toBeNull();
+  it('round-trips a namespaced draft', () => {
+    const d: Draft = { identity: 'x', style: ['a'] };
+    saveDraft('soul', d);
+    expect(loadDraft('soul')).toEqual(d);
+    expect(loadDraft('agents')).toBeNull();
   });
 
-  it('round-trips a draft', () => {
-    saveDraft(draft);
-    expect(loadDraft()).toEqual(draft);
-    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+  it('round-trips active/available pack and active tab', () => {
+    saveActivePack(BASELINE_PACK);
+    expect(loadActivePack()?.packVersion).toBe('1');
+    saveAvailablePack(BASELINE_PACK);
+    expect(loadAvailablePack()?.packVersion).toBe('1');
+    clearAvailablePack();
+    expect(loadAvailablePack()).toBeNull();
+    saveActiveTab('agents');
+    expect(loadActiveTab()).toBe('agents');
   });
 
-  it('returns null on corrupt data', () => {
-    localStorage.setItem(STORAGE_KEY, '{not json');
-    expect(loadDraft()).toBeNull();
+  it('migrates a legacy v1 draft into draft:soul once', () => {
+    const legacy = { identity: 'old', style: ['s'], avoid: [], defaults: [], examples: ['e'] };
+    localStorage.setItem(LEGACY_KEY, JSON.stringify(legacy));
+    migrateLegacyDraft();
+    expect(loadDraft('soul')).toEqual({ identity: 'old', style: ['s'], avoid: [], defaults: [], examples: ['e'] });
+    saveDraft('soul', { identity: 'new', style: [] });
+    migrateLegacyDraft();
+    expect(loadDraft('soul')).toEqual({ identity: 'new', style: [] });
   });
 });
