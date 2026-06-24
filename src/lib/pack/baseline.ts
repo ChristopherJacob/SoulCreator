@@ -108,9 +108,86 @@ const soul: DocTypePack = {
   ],
 };
 
-// AGENTS doc type is fully populated in a later task. Until then it is a valid
-// empty shell so the pack validates; no UI references it yet.
-const agents: DocTypePack = { sections: [], rubric: [], gate: [], presets: [] };
+const COMMAND_TOKENS: PatternSpec = {
+  source: '`[^`]+`|\\b(npm|npx|yarn|pnpm|pip|pytest|ruff|mypy|tox|git|docker|make|cargo|go|node|deno|bun|vite|eslint|tsc|curl)\\b',
+  flags: 'i',
+};
+
+const VAGUE_FILLER: PatternSpec = {
+  source: '\\b(best practices?|good code|clean code|as needed|as appropriate|appropriately|follow conventions|the usual)\\b',
+  flags: 'gi',
+};
+
+const agents: DocTypePack = {
+  sections: [
+    { id: 'overview', heading: 'Project overview', level: 1, kind: 'text', optional: false,
+      placeholder: 'One or two sentences: what this repo is.', help: 'What the project is and does.' },
+    { id: 'commands', heading: 'Setup & commands', level: 2, kind: 'list', optional: false,
+      placeholder: 'Run `npm test` before pushing.', help: 'Exact build/test/run commands — the highest-ROI section.' },
+    { id: 'codeStyle', heading: 'Code style', level: 2, kind: 'list', optional: true,
+      placeholder: 'Prefer named exports.', help: 'Conventions, formatting, idioms.' },
+    { id: 'testing', heading: 'Testing', level: 2, kind: 'list', optional: true,
+      placeholder: 'All tests must pass before a PR.', help: 'How to run tests; what must pass.' },
+    { id: 'architecture', heading: 'Architecture', level: 2, kind: 'list', optional: true,
+      placeholder: 'Pure modules live in src/lib.', help: 'Key modules and boundaries.' },
+    { id: 'boundaries', heading: 'Boundaries', level: 2, kind: 'list', optional: false,
+      placeholder: 'Always: run tests. Ask first: schema changes. Never: commit secrets.',
+      help: 'Always do / Ask first / Never do.' },
+    { id: 'commitPr', heading: 'Commit & PR', level: 2, kind: 'list', optional: true,
+      placeholder: 'Use Conventional Commits.', help: 'Message format and review expectations.' },
+  ],
+  rubric: [
+    { id: 'commands', label: 'Commands concreteness', max: 24, target: 'commands', check: 'patternRatio', direction: 'reward',
+      params: { patterns: [COMMAND_TOKENS] },
+      tips: { pass: 'Concrete, runnable commands.', fail: 'List exact commands with flags, e.g. `npm test`, `npm run build`.' } },
+    { id: 'conciseness', label: 'Conciseness', max: 18, target: '#total', check: 'lineCount', direction: 'reward',
+      params: { bands: [
+        { min: 0, max: 0, points: 0 },
+        { min: 1, max: 120, points: 18 },
+        { min: 121, max: 200, points: 10 },
+        { min: 201, points: 4 },
+      ] },
+      tips: { pass: 'Tight and scannable (≤120 lines).', fail: 'Trim toward ≤150 lines — long files bury signal.' } },
+    { id: 'boundaries', label: 'Boundaries', max: 16, target: 'boundaries', check: 'listSize', direction: 'reward',
+      params: { bands: [{ min: 3, points: 16 }, { min: 1, points: 8 }, { min: 0, points: 0 }] },
+      tips: { pass: 'Explicit Always/Ask/Never boundaries.', fail: 'Add an Always do / Ask first / Never do triad.' } },
+    { id: 'specificity', label: 'Specificity', max: 16, target: '*', check: 'patternPenalty', direction: 'penalty',
+      params: { patterns: [VAGUE_FILLER], perHit: 4, countMode: 'matches', requiresContent: true },
+      tips: { pass: 'Specific, not boilerplate.', fail: 'Replace vague filler ({hits}) with concrete instructions.' } },
+    { id: 'noHype', label: 'No hype', max: 10, target: '*', check: 'patternPenalty', direction: 'penalty',
+      params: { patterns: [HYPE], perHit: 5, countMode: 'matches', requiresContent: true },
+      tips: { pass: 'No marketing language.', fail: 'Remove hype words (e.g. "world-class", "cutting-edge").' } },
+    { id: 'structure', label: 'Structure', max: 16, target: '*', check: 'structure', direction: 'reward',
+      params: { requiredSections: ['overview', 'commands'] },
+      tips: { pass: 'Overview and commands present.', fail: 'Add a project overview and a commands section.' } },
+  ],
+  gate: [
+    { id: 'overview', check: 'nonEmptyText', target: 'overview', message: 'Add a one-line project overview.' },
+    { id: 'commands', check: 'nonEmptyList', target: 'commands', message: 'Add at least one concrete command.' },
+  ],
+  presets: [
+    { id: 'node-web-app', name: 'Node web app', description: 'Vite/React-style project with npm scripts.',
+      draft: {
+        overview: 'A React + Vite single-page app. Local-first, no backend.',
+        commands: ['Install: `npm install`.', 'Dev server: `npm run dev`.', 'Test: `npm test`.', 'Build: `npm run build`.'],
+        codeStyle: ['Prefer named exports.', 'Keep pure logic in src/lib.'],
+        testing: ['All Vitest tests must pass before a PR.'],
+        boundaries: ['Always run the tests before committing.', 'Ask first before adding a dependency.', 'Never commit secrets or .env files.'],
+        commitPr: ['Use Conventional Commits (feat:, fix:, chore:).'],
+      } },
+    { id: 'python-lib', name: 'Python library', description: 'pytest + ruff project layout.',
+      draft: {
+        overview: 'A Python library packaged with pyproject.toml.',
+        commands: ['Install: `pip install -e .[dev]`.', 'Test: `pytest`.', 'Lint: `ruff check .`.', 'Types: `mypy src`.'],
+        codeStyle: ['Follow ruff formatting.', 'Type-annotate public functions.'],
+        testing: ['Run `pytest` and keep coverage above the current baseline.'],
+        boundaries: ['Always run `ruff` and `pytest` before a PR.', 'Ask first before changing the public API.', 'Never break semver without a major bump.'],
+        commitPr: ['One logical change per PR.'],
+      } },
+    { id: 'blank', name: 'Blank Slate', description: 'Start from an empty file.',
+      draft: { overview: '', commands: [], boundaries: [] } },
+  ],
+};
 
 export const BASELINE_PACK: Pack = {
   packVersion: '1',
