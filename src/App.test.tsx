@@ -1,8 +1,17 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import App from './App';
 
-beforeEach(() => localStorage.clear());
+beforeEach(() => {
+  localStorage.clear();
+  vi.stubGlobal('fetch', vi.fn(async (url: string | URL | Request) =>
+    String(url).endsWith('manifest.json')
+      ? ({ ok: true, status: 200, json: async () => ({ latest: '1', schemaVersion: 2, url: 'pack-1.json', publishedAt: 'x', summary: 's' }) } as Response)
+      : ({ ok: false, status: 404, json: async () => ({}) } as Response),
+  ));
+});
+
+afterEach(() => vi.unstubAllGlobals());
 
 describe('App', () => {
   it('renders the SOUL builder and updates the live score when a preset is applied', () => {

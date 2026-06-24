@@ -64,3 +64,14 @@
   border: 1px solid #7c5cff66; color: #cbb8ff; border-radius: 6px;
   padding: 0.2rem 0.5rem; cursor: pointer;
 }
+
+/* Update banner + indicator */
+.update-banner {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  background: #2a2350; border: 1px solid #7c5cff66; color: #e7e2ff;
+  padding: 0.6rem 1rem; border-radius: 8px; margin: 0 0 1rem; font-size: 0.9rem;
+}
+.update-actions { display: flex; gap: 0.5rem; flex: none; }
+.update-banner button { padding: 0.3rem 0.8rem; border-radius: 6px; cursor: pointer; border: none; background: #7c5cff; color: #fff; }
+.update-banner button.ghost { background: transparent; border: 1px solid #ffffff33; color: #cbb8ff; }
+.pack-indicator { font-size: 0.8rem; color: #8a8aa0; margin: 0.2rem 0 0; }

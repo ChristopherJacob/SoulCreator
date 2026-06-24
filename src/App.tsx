@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { emptyDraft, type Draft } from './lib/model';
 import { scoreDraft } from './lib/pack/engine';
 import { presetsFor } from './lib/presets';
 import { BASELINE_PACK } from './lib/pack/baseline';
 import { docTypeById } from './lib/docTypes';
-import type { DocId } from './lib/pack/schema';
+import type { DocId, Pack } from './lib/pack/schema';
+import { checkForUpdate } from './lib/pack/update';
+import { PACK_BASE_URL } from './lib/config';
 import {
   loadDraft, saveDraft, loadActivePack, migrateLegacyDraft,
   loadActiveTab, saveActiveTab,
+  saveActivePack, saveAvailablePack, clearAvailablePack, loadAvailablePack,
 } from './lib/storage';
+import { UpdateBanner, type BannerState } from './components/UpdateBanner';
 import { moveLeaksToAgents } from './lib/crossTab';
 import { TabBar } from './components/TabBar';
 import { BuilderForm } from './components/BuilderForm';
@@ -18,7 +22,8 @@ import { PreviewPane } from './components/PreviewPane';
 import './App.css';
 
 export default function App() {
-  const pack = useMemo(() => loadActivePack() ?? BASELINE_PACK, []);
+  const [pack, setPack] = useState<Pack>(() => loadActivePack() ?? BASELINE_PACK);
+  const [banner, setBanner] = useState<BannerState>({ kind: 'none' });
   const [active, setActive] = useState<DocId>(() => loadActiveTab() ?? 'soul');
 
   const [drafts, setDrafts] = useState<Record<DocId, Draft>>(() => {
@@ -50,6 +55,42 @@ export default function App() {
     saveActiveTab(id);
   };
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const cached = loadAvailablePack();
+      if (cached) {
+        setBanner({ kind: 'available', version: cached.packVersion, summary: cached.summary });
+        return;
+      }
+      const out = await checkForUpdate({
+        fetch: fetch.bind(window),
+        baseUrl: PACK_BASE_URL,
+        online: navigator.onLine,
+        activeVersion: pack.packVersion,
+      });
+      if (cancelled) return;
+      if (out.kind === 'available') {
+        saveAvailablePack(out.pack);
+        setBanner({ kind: 'available', version: out.pack.packVersion, summary: out.pack.summary });
+      } else if (out.kind === 'needs-app-update') {
+        setBanner({ kind: 'needs-app-update', version: out.manifest.latest });
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [pack.packVersion]);
+
+  const applyUpdate = useCallback(() => {
+    const next = loadAvailablePack();
+    if (!next) return;
+    saveActivePack(next);
+    clearAvailablePack();
+    setPack(next);
+    setBanner({ kind: 'none' });
+  }, []);
+
+  const dismissUpdate = useCallback(() => setBanner({ kind: 'none' }), []);
+
   const handleMoveLeaks = () => {
     const moved = moveLeaksToAgents(drafts.soul, drafts.agents, pack.docTypes.soul.sections);
     setDrafts({ soul: moved.soul, agents: moved.agents });
@@ -61,8 +102,12 @@ export default function App() {
       <header className="app-header">
         <h1>SOUL Creator</h1>
         <p>{docType.blurb}</p>
+        <p className="pack-indicator">
+          {navigator.onLine ? 'online' : 'offline'} · pack v{pack.packVersion}
+        </p>
       </header>
 
+      <UpdateBanner state={banner} onApply={applyUpdate} onDismiss={dismissUpdate} />
       <TabBar active={active} onSelect={selectTab} />
       <PresetPicker presets={presetsFor(pack, active)} onApply={setDraft} />
 
