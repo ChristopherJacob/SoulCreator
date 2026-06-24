@@ -18,6 +18,7 @@ describe('validatePack', () => {
   });
 
   it('rejects a pack missing docTypes', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { docTypes, ...bad } = minimalPack;
     expect(validatePack(bad)).toBeNull();
   });
