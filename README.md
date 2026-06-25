@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="https://christopherjacob.github.io/SoulCreator/"><b>▶ Live app</b></a>
+  <a href="https://christopherjacob.github.io/Caduceus/"><b>▶ Live app</b></a>
 </p>
 
 ---
@@ -89,23 +89,22 @@ npm run pack:build
 
 ## Deploy
 
-The app is a static site published to GitHub Pages from the `gh-pages` branch.
-One command builds with the correct base path and publishes `dist/`:
+The app is a static site deployed to GitHub Pages. Pushing to `main` runs the
+GitHub Actions workflow (`.github/workflows/deploy.yml`), which builds with
+`VITE_BASE=/Caduceus/` (the project-site subpath, so asset and pack URLs resolve)
+and publishes `dist/`.
+
+A manual fallback is available for one-off deploys:
 
 ```bash
-npm run deploy
+npm run deploy        # builds with VITE_BASE=/Caduceus/ and pushes dist/ to gh-pages
+VITE_BASE=/Other/ npm run deploy   # override the base for a different project path
 ```
 
-This bakes in `VITE_BASE=/SoulCreator/` (the project-site subpath) so asset and
-pack URLs resolve — building with the wrong base yields a blank page. To deploy
-under a different path (e.g. after renaming the repo), override it:
-
-```bash
-VITE_BASE=/Caduceus/ npm run deploy
-```
-
-Packs are served from `<base>/packs/`, and the app's update checks read from the
-URL in `src/lib/config.ts` (override at build time with `VITE_PACK_BASE_URL`).
+Building with the wrong base yields a blank page, so always go through
+`npm run deploy` (or CI) rather than a bare `vite build`. Packs are served from
+`<base>/packs/`, and the app's update checks read from the URL in
+`src/lib/config.ts` (override at build time with `VITE_PACK_BASE_URL`).
 
 ## How it's built
 
