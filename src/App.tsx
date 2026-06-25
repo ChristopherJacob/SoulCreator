@@ -36,6 +36,8 @@ export default function App() {
     };
   });
 
+  const [online, setOnline] = useState(navigator.onLine);
+
   const [importing, setImporting] = useState(false);
   const [unmatched, setUnmatched] = useState<ParseResult['unmatched']>([]);
   const [pendingImport, setPendingImport] = useState<ParseResult | null>(null);
@@ -55,6 +57,17 @@ export default function App() {
     const id = setTimeout(() => saveDraft(active, draft), 300);
     return () => clearTimeout(id);
   }, [active, draft]);
+
+  useEffect(() => {
+    const goOnline = () => setOnline(true);
+    const goOffline = () => setOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
 
   const selectTab = (id: DocId) => {
     setActive(id);
@@ -146,7 +159,7 @@ export default function App() {
         </div>
         <p>{docType.blurb}</p>
         <p className="pack-indicator">
-          {navigator.onLine ? 'online' : 'offline'} · pack v{pack.packVersion}
+          {online ? 'online' : 'offline'} · pack v{pack.packVersion}
           {pack.packVersion !== BASELINE_PACK.packVersion && (
             <button type="button" className="revert-pack" onClick={revertToBundled}>
               Revert to bundled (v{BASELINE_PACK.packVersion})

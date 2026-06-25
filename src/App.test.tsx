@@ -52,6 +52,15 @@ describe('App', () => {
     expect(screen.getByDisplayValue('Fresh identity here.')).toBeInTheDocument();
   });
 
+  it('updates the connectivity indicator on offline/online events', () => {
+    render(<App />);
+    expect(screen.getByText(/online · pack/)).toBeInTheDocument();
+    fireEvent(window, new Event('offline'));
+    expect(screen.getByText(/offline · pack/)).toBeInTheDocument();
+    fireEvent(window, new Event('online'));
+    expect(screen.getByText(/online · pack/)).toBeInTheDocument();
+  });
+
   it('reverts to the bundled pack when a non-bundled pack is active', async () => {
     const { saveActivePack } = await import('./lib/storage');
     const { BASELINE_PACK } = await import('./lib/pack/baseline');
