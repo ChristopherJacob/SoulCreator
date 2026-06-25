@@ -21,4 +21,12 @@ describe('moveLeaksToAgents', () => {
     expect(nextSoul.style).toEqual([]);
     expect((nextAgents.architecture as string[])).toContain('Use ./src/index.ts as the entry.');
   });
+
+  it('moves a leak in the identity text field into AGENTS and clears it', () => {
+    const soul: Draft = { identity: 'Use ./src/index.ts as the entry.', style: [], avoid: [], defaults: [] };
+    const agents: Draft = { overview: 'x', commands: [], boundaries: [] };
+    const { soul: nextSoul, agents: nextAgents } = moveLeaksToAgents(soul, agents, soulSections);
+    expect(nextSoul.identity).toBe('');
+    expect((nextAgents.architecture as string[])).toContain('Use ./src/index.ts as the entry.');
+  });
 });

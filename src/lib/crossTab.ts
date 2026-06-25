@@ -36,14 +36,23 @@ export function moveLeaksToAgents(
   const nextAgents: Draft = structuredClone(agents);
 
   for (const s of soulSections) {
-    if (s.kind !== 'list') continue;
-    const lines = cleanLines(nextSoul[s.id] as string[] | undefined);
-    const keep: string[] = [];
-    for (const line of lines) {
-      if (isLeak(line)) appendTo(nextAgents, target(line), line);
-      else keep.push(line);
+    if (s.kind === 'list') {
+      const lines = cleanLines(nextSoul[s.id] as string[] | undefined);
+      const keep: string[] = [];
+      for (const line of lines) {
+        if (isLeak(line)) appendTo(nextAgents, target(line), line);
+        else keep.push(line);
+      }
+      nextSoul[s.id] = keep;
+    } else {
+      // Single-safe-append for a text section: if the whole field trips a leak
+      // pattern, relocate it wholesale and clear the SOUL field.
+      const text = typeof nextSoul[s.id] === 'string' ? (nextSoul[s.id] as string).trim() : '';
+      if (text && isLeak(text)) {
+        appendTo(nextAgents, target(text), text);
+        nextSoul[s.id] = '';
+      }
     }
-    nextSoul[s.id] = keep;
   }
 
   return { soul: nextSoul, agents: nextAgents };
