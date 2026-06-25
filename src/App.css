@@ -88,3 +88,21 @@
   border: 1px solid #ffffff33; color: #cbb8ff; border-radius: 6px;
   padding: 0.1rem 0.5rem; cursor: pointer;
 }
+
+/* Import */
+.tab-row { display: flex; align-items: center; justify-content: space-between; }
+.import-toggle { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.import-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin: 0 0 16px; }
+.import-field span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.import-field textarea { width: 100%; box-sizing: border-box; }
+.import-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
+.import-file { font-size: 13px; color: var(--accent); cursor: pointer; }
+.import-file input { display: none; }
+.import-buttons { display: flex; gap: 8px; }
+.import-buttons button, .import-confirm button { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 7px 14px; cursor: pointer; }
+.import-buttons button.ghost, .import-confirm button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.import-confirm { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #2a2350; border: 1px solid #7c5cff66; color: #e7e2ff; border-radius: 8px; padding: 10px 14px; margin: 0 0 16px; font-size: 14px; }
+.unmatched-panel { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin: 0 0 16px; font-size: 13px; }
+.unmatched-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.unmatched-head button { margin-left: auto; }
+.unmatched-panel pre { white-space: pre-wrap; background: var(--surface); border-radius: 6px; padding: 8px; margin: 4px 0 0; }

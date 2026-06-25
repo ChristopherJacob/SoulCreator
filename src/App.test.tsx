@@ -29,6 +29,29 @@ describe('App', () => {
     expect(screen.getByText('Setup & commands')).toBeInTheDocument();
   });
 
+  it('imports an AGENTS file, switches to its tab, and surfaces unmatched content', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: /import/i }));
+    const md = '# Project overview\nA test app.\n\n## Setup & commands\n- Run `npm test`.\n\n## Weird Section\nloose notes';
+    fireEvent.change(screen.getByLabelText('Paste Markdown'), { target: { value: md } });
+    fireEvent.click(screen.getByRole('button', { name: 'Import' }));
+    expect(screen.getByDisplayValue('A test app.')).toBeInTheDocument();
+    expect(screen.getByText(/Weird Section/)).toBeInTheDocument();
+  });
+
+  it('asks to confirm before replacing a non-empty draft on import', () => {
+    render(<App />);
+    fireEvent.click(screen.getByText('Pragmatic Engineer'));
+    fireEvent.click(screen.getByRole('button', { name: /import/i }));
+    fireEvent.change(screen.getByLabelText('Paste Markdown'), {
+      target: { value: '# Personality\nFresh identity here.' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Import' }));
+    expect(screen.getByText(/Replace your current/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Replace' }));
+    expect(screen.getByDisplayValue('Fresh identity here.')).toBeInTheDocument();
+  });
+
   it('reverts to the bundled pack when a non-bundled pack is active', async () => {
     const { saveActivePack } = await import('./lib/storage');
     const { BASELINE_PACK } = await import('./lib/pack/baseline');

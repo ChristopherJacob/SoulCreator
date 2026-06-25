@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { emptyDraft, type Draft } from './lib/model';
+import { parseMarkdown, type ParseResult } from './lib/parser';
+import { ImportPanel } from './components/ImportPanel';
 import { scoreDraft } from './lib/pack/engine';
 import { presetsFor } from './lib/presets';
 import { BASELINE_PACK } from './lib/pack/baseline';
@@ -33,6 +35,10 @@ export default function App() {
       agents: loadDraft('agents') ?? emptyDraft(pack.docTypes.agents.sections),
     };
   });
+
+  const [importing, setImporting] = useState(false);
+  const [unmatched, setUnmatched] = useState<ParseResult['unmatched']>([]);
+  const [pendingImport, setPendingImport] = useState<ParseResult | null>(null);
 
   const docType = docTypeById(active);
   const docPack = pack.docTypes[active];
@@ -98,6 +104,30 @@ export default function App() {
     setBanner({ kind: 'none' });
   }, []);
 
+  const sectionsByDoc = {
+    soul: pack.docTypes.soul.sections,
+    agents: pack.docTypes.agents.sections,
+  };
+
+  const draftHasContent = (d: Draft): boolean =>
+    Object.values(d).some((v) =>
+      Array.isArray(v) ? v.some((s) => s.trim() !== '') : typeof v === 'string' && v.trim() !== '',
+    );
+
+  const applyImport = (result: ParseResult) => {
+    setDrafts((prev) => ({ ...prev, [result.docId]: result.draft }));
+    selectTab(result.docId);
+    setUnmatched(result.unmatched);
+    setPendingImport(null);
+    setImporting(false);
+  };
+
+  const handleImport = (markdown: string) => {
+    const result = parseMarkdown(markdown, active, sectionsByDoc);
+    if (draftHasContent(drafts[result.docId])) setPendingImport(result);
+    else applyImport(result);
+  };
+
   const handleMoveLeaks = () => {
     const moved = moveLeaksToAgents(drafts.soul, drafts.agents, pack.docTypes.soul.sections);
     setDrafts({ soul: moved.soul, agents: moved.agents });
@@ -126,7 +156,35 @@ export default function App() {
       </header>
 
       <UpdateBanner state={banner} onApply={applyUpdate} onDismiss={dismissUpdate} />
-      <TabBar active={active} onSelect={selectTab} />
+      <div className="tab-row">
+        <TabBar active={active} onSelect={selectTab} />
+        <button type="button" className="import-toggle" onClick={() => setImporting((v) => !v)}>
+          Import…
+        </button>
+      </div>
+      {importing && <ImportPanel onImport={handleImport} onClose={() => setImporting(false)} />}
+      {pendingImport && (
+        <div className="import-confirm" role="alertdialog">
+          <span>Replace your current {docTypeById(pendingImport.docId).label} draft with the imported file?</span>
+          <span className="import-buttons">
+            <button type="button" onClick={() => applyImport(pendingImport)}>Replace</button>
+            <button type="button" className="ghost" onClick={() => setPendingImport(null)}>Keep current</button>
+          </span>
+        </div>
+      )}
+      {unmatched.length > 0 && (
+        <div className="unmatched-panel" role="status">
+          <div className="unmatched-head">
+            <strong>Unmatched content</strong> — couldn't place these; move them in manually.
+            <button type="button" className="ghost" onClick={() => setUnmatched([])}>Dismiss</button>
+          </div>
+          <ul>
+            {unmatched.map((u, i) => (
+              <li key={i}><em>{u.heading || '(no heading)'}</em><pre>{u.body}</pre></li>
+            ))}
+          </ul>
+        </div>
+      )}
       <PresetPicker presets={presetsFor(pack, active)} onApply={setDraft} />
 
       <main className="panes">
