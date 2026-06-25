@@ -89,13 +89,19 @@ npm run pack:build
 
 ## Deploy
 
-The app is a static site. For a GitHub Pages **project site** (served from a
-`/<repo>/` subpath), build with the matching base path so asset and pack URLs
-resolve:
+The app is a static site published to GitHub Pages from the `gh-pages` branch.
+One command builds with the correct base path and publishes `dist/`:
 
 ```bash
-VITE_BASE=/SoulCreator/ npm run build
-# then publish dist/ (e.g. to the gh-pages branch)
+npm run deploy
+```
+
+This bakes in `VITE_BASE=/SoulCreator/` (the project-site subpath) so asset and
+pack URLs resolve — building with the wrong base yields a blank page. To deploy
+under a different path (e.g. after renaming the repo), override it:
+
+```bash
+VITE_BASE=/Caduceus/ npm run deploy
 ```
 
 Packs are served from `<base>/packs/`, and the app's update checks read from the

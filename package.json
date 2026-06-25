@@ -11,7 +11,9 @@
     "test": "vitest run src",
     "test:build": "vitest run scripts",
     "test:watch": "vitest",
-    "pack:build": "npx tsx scripts/build-pack.mjs"
+    "pack:build": "npx tsx scripts/build-pack.mjs",
+    "deploy:build": "tsc -b && VITE_BASE=${VITE_BASE:-/SoulCreator/} vite build && touch dist/.nojekyll",
+    "deploy": "npm run deploy:build && gh-pages -d dist -t -b gh-pages -m \"Deploy Caduceus\""
   },
   "dependencies": {
     "react": "^19.2.6",
@@ -30,6 +32,7 @@
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
+    "gh-pages": "^6.3.0",
     "globals": "^17.6.0",
     "jsdom": "^29.1.1",
     "tsx": "^4.22.4",
