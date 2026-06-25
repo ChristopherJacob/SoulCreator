@@ -15,12 +15,16 @@ interface Props {
 export function PreviewPane({ sections, gate, draft, filename }: Props) {
   const markdown = useMemo(() => generate(sections, draft), [sections, draft]);
   const result = useMemo(() => evaluateGate(gate, draft, sections), [gate, draft, sections]);
-  const [copied, setCopied] = useState(false);
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
 
   const copy = async () => {
-    await navigator.clipboard.writeText(markdown);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(markdown);
+      setCopyState('copied');
+    } catch {
+      setCopyState('failed');
+    }
+    setTimeout(() => setCopyState('idle'), 1500);
   };
 
   const download = () => {
@@ -36,7 +40,9 @@ export function PreviewPane({ sections, gate, draft, filename }: Props) {
   return (
     <div className="preview-pane">
       <div className="export-bar">
-        <button type="button" onClick={copy} disabled={!result.ok}>{copied ? 'Copied!' : 'Copy'}</button>
+        <button type="button" onClick={copy} disabled={!result.ok}>
+          {copyState === 'copied' ? 'Copied!' : copyState === 'failed' ? 'Copy failed' : 'Copy'}
+        </button>
         <button type="button" onClick={download} disabled={!result.ok}>Download {filename}</button>
       </div>
       {!result.ok && (
