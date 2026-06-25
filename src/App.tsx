@@ -164,7 +164,7 @@ export default function App() {
       </div>
       {importing && <ImportPanel onImport={handleImport} onClose={() => setImporting(false)} />}
       {pendingImport && (
-        <div className="import-confirm" role="alertdialog">
+        <div className="import-confirm" role="alertdialog" aria-label="Confirm import replace">
           <span>Replace your current {docTypeById(pendingImport.docId).label} draft with the imported file?</span>
           <span className="import-buttons">
             <button type="button" onClick={() => applyImport(pendingImport)}>Replace</button>
