@@ -12,7 +12,7 @@
     "test:build": "vitest run scripts",
     "test:watch": "vitest",
     "pack:build": "npx tsx scripts/build-pack.mjs",
-    "deploy:build": "tsc -b && VITE_BASE=${VITE_BASE:-/SoulCreator/} vite build && touch dist/.nojekyll",
+    "deploy:build": "tsc -b && VITE_BASE=${VITE_BASE:-/Caduceus/} vite build && touch dist/.nojekyll",
     "deploy": "npm run deploy:build && gh-pages -d dist -t -b gh-pages -m \"Deploy Caduceus\""
   },
   "dependencies": {
